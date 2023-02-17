@@ -1,5 +1,7 @@
 #!/bin/env python3
 
+import math
+
 def xyz2srgblin(v):
     return(+.0324096994 * v[0] - .0153738318 * v[1] - .0049861076 * v[2],
            -.0096924364 * v[0] + .0187596750 * v[1] + .0004155506 * v[2],
@@ -15,6 +17,42 @@ def srgblin2xyz(v):
     return(41.239080 * v[0] + 35.758434 * v[1] + 18.048079 * v[2],
            21.263901 * v[0] + 71.516868 * v[1] + 07.219232 * v[2],
            01.933082 * v[0] + 11.919478 * v[1] + 95.053215 * v[2])
+
+
+def _genpwgfun(mu, sig_low, sig_high):
+    ntw_sig_low_sq = -2 * sig_low * sig_low
+    ntw_sig_high_sq = -2 * sig_high * sig_high
+    def _pwgfun(x):
+        offset = x - mu;
+        return(math.exp(offset * offset / ntw_sig_low_sq) if offset < 0 else
+               math.exp(offset * offset / ntw_sig_high_sq))
+    return _pwgfun
+
+_xafn1=_genpwgfun(599.8, 37.9, 31.0)
+_xafn2=_genpwgfun(442.0, 16.0, 26.7)
+_xafn3=_genpwgfun(501.1, 20.4, 26.2)
+
+_yafn1=_genpwgfun(568.8, 46.9, 40.5)
+_yafn2=_genpwgfun(530.9, 16.3, 31.1)
+
+_zafn1=_genpwgfun(437.0, 11.8, 36.0)
+_zafn2=_genpwgfun(459.0, 26.0, 13.8)
+
+def xbar(lmbda):
+    return(1.056 * _xafn1(lmbda) +
+           0.362 * _xafn2(lmbda) -
+           0.065 * _xafn3(lmbda))
+
+def ybar(lmbda):
+    return(0.821 * _yafn1(lmbda) +
+           0.286 * _yafn2(lmbda))
+
+def zbar(lmbda):
+    return(1.217 * _zafn1(lmbda) +
+           0.681 * _zafn2(lmbda))
+
+def spectrum2xyz(radiance, lmbda):
+    return(radiance * xbar(lmbda), radiance * ybar(lmbda), radiance * zbar(lmbda))
 
 
 _labXYZnomD65 = (95.0489, 100, 108.8840)
